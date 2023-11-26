@@ -93,10 +93,7 @@ jsync int[128] {fogOnly} getNextData(logicalId: int) {
     return [];
 }
 
-console.log("a");
-console.log("b");
-
-if (jsys.type === "fog") {
+async function aggregateUpdates() {
     console.log("waiting to aggregate updates", data.length, dataInProgress.size);
     console.log("where did it go?");
     while (data.length > 0 || dataInProgress.size > 0) {
@@ -104,4 +101,8 @@ if (jsys.type === "fog") {
         var gradient_updates = gradients.read();
         console.log(gradient_updates);
     }
+}
+
+if (jsys.type === "fog") {
+    aggregateUpdates();
 }
