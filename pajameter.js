@@ -98,11 +98,12 @@ async function aggregateUpdates() {
     console.log("where did it go?");
     while (data.length > 0 || dataInProgress.size > 0) {
         console.log("waiting for gradient updates...");
-        var gradient_updates = gradients.read();
+        var gradient_updates = await gradients.readLast();
         console.log(gradient_updates);
     }
 }
 
 if (jsys.type === "fog") {
+    await jsys.sleep(100);
     aggregateUpdates();
 }
