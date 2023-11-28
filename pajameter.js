@@ -93,13 +93,27 @@ jsync int[128] {fogOnly} getNextData(logicalId: int) {
     return [];
 }
 
+async function applyGradients(gradient_vec) {
+
+}
+
 async function aggregateUpdates() {
-    console.log("waiting to aggregate updates", data.length, dataInProgress.size);
-    console.log("where did it go?");
     while (data.length > 0 || dataInProgress.size > 0) {
-        console.log("waiting for gradient updates...");
+        console.log("waiting to aggregate updates", data.length, dataInProgress.size);
         var gradient_updates = await gradients.readLast();
         console.log(gradient_updates);
+        gradient_vec = [];
+        if (!Array.isArray(gradient_updates)) {
+            nodeDatas.get(gradient_updates.logicalId).delete(gradient_updates.dataTag);
+            dataInProgress.delete(gradient_updates.dataTag);
+            gradient_vec.push(gradient_updates.gradient);
+        } else
+            for (var gradient in gradient_updates) {
+                nodeDatas.get(gradient.logicalId).delete(gradient.dataTag);
+                dataInProgress.delete(gradient.dataTag);
+                gradient_vec.push(gradient.gradient);
+            }
+        applyGradients(gradient_vec);
     }
 }
 

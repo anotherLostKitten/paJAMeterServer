@@ -16,7 +16,7 @@ jasync calculateGradient(int data[], int dataTag) {
 
 jasync dataFetch() {
     logicalId = getLogicalIdLocal();
-    printf("got logical id %d\n", logicalId);
+    printf("got logical id %llu\n", logicalId);
 
     jarray int data[128];
     while (hasData) {
