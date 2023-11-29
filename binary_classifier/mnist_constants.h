@@ -9,7 +9,8 @@
 
 #define MNIST_TRAINING_IMAGES 60000
 #define MNIST_TESTING_IMAGES 10000
-#define LEARNING_RATE 0.0005
+#define LEARNING_RATE 0.005
+#define NUMBER_TO_CLASSIFY 1
 
 struct image_data {
     uint8_t data[MNIST_IMAGE_SIZE];

@@ -6,6 +6,20 @@
 
 #include "mnist_constants.h"
 
+double calculate_L2_norm(double *vector, int size) {
+
+    // init the double sum
+    double sum_of_squares = 0.0;
+
+    // sum the squares
+    for (int i = 0; i < size; i++) {
+        sum_of_squares += vector[i] * vector[i];
+    }
+
+    // calculate the square root
+    return sqrt(sum_of_squares);
+}
+
 // Function to generate random weight between -0.5 and .5
 double generate_random_weight() {
     return (((double) rand()) / ((double) RAND_MAX)) -.5 ;
@@ -69,20 +83,28 @@ void init_weights(double* w){
 
 
 // Run Gradient Descent
-void run_gradient_descent(double learning_rate, struct image_data* datum, double* w){
+void run_gradient_descent(double learning_rate, int number_to_classify, struct image_data* datum, double* w){
 
     // Step 1: Add a bias column to the feature vector - ONLY USE x_with_bias from here
     double x[FEATURE_SIZE_W_BIAS];
     add_bias_column(datum->data, x);
 
+    double y = datum->label == number_to_classify ? 1 : 0;
+
     // Calculate the gradient
     double gradient_output[FEATURE_SIZE_W_BIAS];
-    gradient(gradient_output, x, w, datum->label);
+    gradient(gradient_output, x, w, y);
 
     // Perform gradient descent -- aka update the weights based on the gradient
     for (int i = 0; i < FEATURE_SIZE_W_BIAS; i++){
         w[i]= w[i] - learning_rate * gradient_output[i];
     }
+
+    // Step 3: Calculate the l2 norm in order to get the model error
+    double error = calculate_L2_norm(gradient_output, FEATURE_SIZE_W_BIAS);
+
+    // Step 4: Print out the error
+    printf("The model error is: %lf\n", error);
 
 }
 
@@ -94,5 +116,5 @@ int main() {
         w[i] = generate_random_weight();
 
     for (int i=0; i < MNIST_TRAINING_IMAGES; i++)
-        run_gradient_descent(LEARNING_RATE, &data[i], w);
+        run_gradient_descent(LEARNING_RATE, NUMBER_TO_CLASSIFY, &data[i], w);
 }
