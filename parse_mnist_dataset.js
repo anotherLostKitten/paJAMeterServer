@@ -32,7 +32,7 @@ function parseMNISTDataset(setSize, imagesPath, labelsPath, outputPath = "") {
 }
 
 // The parsed data looks like:
-//  [ [0, 0, 1, ..., 0], -- 10 entries, binary classifiers
+//  [ 5,
 //    [0, 0, 0, 0, 0, 0, 0, 0, ... ] -- image data
 //  ]
 
