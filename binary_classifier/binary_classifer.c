@@ -10,6 +10,20 @@
 #define MNIST_IMAGE_SIZE MNIST_IMAGE_WIDTH * MNIST_IMAGE_HEIGHT
 #define FEATURE_SIZE_W_BIAS MNIST_IMAGE_SIZE + 1
 
+double calculate_L2_norm(double *vector, int size) {
+    
+    // init the double sum
+    double sum_of_squares = 0.0;
+
+    // sum the squares
+    for (int i = 0; i < size; i++) {
+        sum_of_squares += vector[i] * vector[i];
+    }
+
+    // calculate the square root
+    return sqrt(sum_of_squares);
+}
+
 // Function to generate random weight between -0.5 and .5
 double generate_random_weight() {
     return (((double) rand()) / ((double) RAND_MAX)) -.5 ;
@@ -32,7 +46,7 @@ double dot_product(double *a, double *b, int size) {
     return result;
 }
 
-void gradient(double *gradient_output, double *x, double *w, double *y){
+void gradient(double *gradient_output, double *x, double *w, int *y){
     // Note n is FEATURE_SIZE_W_BIAS since that is the feature size of our image
     // y is 1x1 value -- either true or false
     // x is (D+1)x1 array -- the pixels of the image as an array - D is number of features - +1 because of bias
@@ -54,17 +68,6 @@ void gradient(double *gradient_output, double *x, double *w, double *y){
     
 }
 
-// Function used to add a new column to the features matrix - a bias column
-void add_bias_column(double *x, double *x_with_bias) {
-    
-    for (int i = 0; i < FEATURE_SIZE_W_BIAS; i++) {
-        if (i == 0){
-            x_with_bias[i] = 1;
-        }
-        x_with_bias[i] = x[i];
-    }
-}
-
 // Initialize weights needed for gradient descent - add an extra row for bias
 void init_weights(double *w){
     for (int i = 0; i < FEATURE_SIZE_W_BIAS; i++){
@@ -74,29 +77,59 @@ void init_weights(double *w){
 
 
 // Run Gradient Descent
-void run_gradient_descent(double *learning_rate, double *x, double *y, double *w){
+void run_gradient_descent(double *learning_rate, double *x, int *y, double *w){
     
-    // Step 1: Add a bias column to the feature vector - ONLY USE x_with_bias from here
-    double* x_with_bias = malloc(FEATURE_SIZE_W_BIAS * sizeof(double));
-    add_bias_column(x, x_with_bias);
-    free(x);
-    
-    // Calculate the gradient
+    // Step 1: Calculate the gradient
     double* gradient_output = malloc(FEATURE_SIZE_W_BIAS * sizeof(double));
     gradient(gradient_output, x, w, y);
     
-    // Perform gradient descent -- aka update the weights based on the gradient
+    // Step 2: Perform gradient descent -- aka update the weights based on the gradient
     for (int i = 0; i < FEATURE_SIZE_W_BIAS; i++){
         w[i]= w[i] - (*learning_rate)* (gradient_output[i]);
     }
     
-    // Free the malloced variables
-    free(x_with_bias);
+    // Step 3: Calculate the l2 norm in order to get the model error
+    double error = calculate_L2_norm(gradient_output, FEATURE_SIZE_W_BIAS);
+    
+    // Step 4: Print out the error
+    printf("The model error is: %lf\n", error);
+    
+    // Step 5: Free the malloced variable
     free(gradient_output);
  
+}
+
+// Code to initalize binary classifier -- runs 100 iterations of gradient descent one image at a time
+void initalize_classifier(double *learning_rate, int number_to_classify, double *x, int *y, int image_index){
+    
+    // Run grad descent on 100 images
+    for (int i = image_index; i < 100+image_index; i++){
+        
+        // Transform x feature to proper size of image and add the bias -> (D+1)x1
+        int* x_transform = malloc(sizeof(double)*FEATURE_SIZE_W_BIAS);
+        
+        // Add bias and x values to x_transform
+        for (int j = 0; j < FEATURE_SIZE_W_BIAS; j++) {
+            if (j == 0){
+                x_transform[j] = 1;
+            }else{
+               x_transform[j] = x[(i*MNIST_IMAGE_SIZE)+(j)];
+            }
+        }
+        
+        // Transform y label to binary -> 1x1 binary value
+        int* y_transform = malloc(sizeof(int));
+        *y_transform = (*y[i] == number_to_classify) ? 1 : 0;
+        
+        // Run grad descent
+        run_gradient_descent(learning_rate, x_transform, y_transform, w);
+        
+        // Free the malloced variables
+        free(x_transform);
+        free(y_transform);   
+    }
 }
 
 // int main(){
     
 // }
-
