@@ -106,7 +106,7 @@ void initalize_classifier(double *learning_rate, int number_to_classify, double 
     for (int i = image_index; i < 100+image_index; i++){
         
         // Transform x feature to proper size of image and add the bias -> (D+1)x1
-        int* x_transform = malloc(sizeof(double)*FEATURE_SIZE_W_BIAS);
+        double* x_transform = malloc(sizeof(double)*FEATURE_SIZE_W_BIAS);
         
         // Add bias and x values to x_transform
         for (int j = 0; j < FEATURE_SIZE_W_BIAS; j++) {
