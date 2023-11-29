@@ -2,6 +2,9 @@ japp nspc {
     required_linker_flags: -lm;
 }
 
+
+const parse_dataset = require('./parse_mnist_dataset.js');
+
 jdata {
     struct gradient_update_t {
         int dataTag;
@@ -14,10 +17,8 @@ const boundedDelayMax = 1;
 
 let logicalIdCount = 0;
 
-let data = [[1, 2, 3, 4],
-            [5, 6, 7, 8],
-            [9, 10, 11, 12],
-            [13, 14, 15, 16]];
+
+let data = parse_dataset.loadTrainingData();
 
 let inProgress = [];
 
@@ -59,7 +60,7 @@ jsync unsigned long long int {fogOnly} getLogicalId() {
     return logicalIdCount;
 }
 
-jsync int[128] {deviceOnly} getNextDataLocal(logicalId: int) {
+jsync int[800] {deviceOnly} getNextDataLocal(logicalId: int) {
     while(1) {
         var dathandle = getNextData(logicalId);
         try {
@@ -74,7 +75,7 @@ jsync int[128] {deviceOnly} getNextDataLocal(logicalId: int) {
     }
 }
 
-jsync int[128] {fogOnly} getNextData(logicalId: int) {
+jsync int[800] {fogOnly} getNextData(logicalId: int) {
     if (data.length > 0) {
         if (nodeDatas.get(logicalId).size < boundedDelayMax) {
             let dataTag = dataCount++;
@@ -82,6 +83,9 @@ jsync int[128] {fogOnly} getNextData(logicalId: int) {
             nodeDatas.get(logicalId).add(dataTag);
 
             let vec = data.pop();
+            vec[1].push(vec[0]);
+            vec = vec[1];
+            console.log(vec);
             vec.push(dataTag);
 
             dataInProgress.set(dataTag, vec);

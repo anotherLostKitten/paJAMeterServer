@@ -1,8 +1,8 @@
 unsigned long long int logicalId = 0;
 int hasData = 1;
 
-jasync calculateGradient(int data[], int dataTag) {
-    printf("computing gradient for data %d\n", dataTag);
+jasync calculateGradient(int data[], int label, int dataTag) {
+    printf("computing gradient for data %d (label: %d)\n", dataTag, label);
 
     jsys.sleep(100000); // TODO
 
@@ -18,12 +18,13 @@ jasync dataFetch() {
     logicalId = getLogicalIdLocal();
     printf("got logical id %llu\n", logicalId);
 
-    jarray int data[128];
+    jarray int data[800];
     while (hasData) {
         data = getNextDataLocal(logicalId);
         if (data.len) {
             int dataTag = data.data[--data.len];
-            calculateGradient(&data, dataTag);
+            int label = data.data[--data.len];
+            calculateGradient(&data, label, dataTag);
         }
     }
 }
