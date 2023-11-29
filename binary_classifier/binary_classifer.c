@@ -8,15 +8,15 @@
 
 double calculate_L2_norm(double *vector, int size) {
 
-    // init the double sum
+    // Init the double sum
     double sum_of_squares = 0.0;
 
-    // sum the squares
+    // Sum the squares
     for (int i = 0; i < size; i++) {
         sum_of_squares += vector[i] * vector[i];
     }
 
-    // calculate the square root
+    // Calculate the square root
     return sqrt(sum_of_squares);
 }
 
