@@ -100,8 +100,14 @@ void run_gradient_descent(double *learning_rate, double *x, int *y, double *w){
 }
 
 // Code to initalize binary classifier -- runs 100 iterations of gradient descent one image at a time
-void initalize_classifier(double *learning_rate, int number_to_classify, double *x, int *y, int image_index){
-    
+void initalize_classifier(
+    double *learning_rate,
+    int number_to_classify, 
+    double *x, 
+    int *y, 
+    int image_index, 
+    double *w
+){
     // Run grad descent on 100 images
     for (int i = image_index; i < 100+image_index; i++){
         
@@ -119,7 +125,7 @@ void initalize_classifier(double *learning_rate, int number_to_classify, double 
         
         // Transform y label to binary -> 1x1 binary value
         int* y_transform = malloc(sizeof(int));
-        *y_transform = (*y[i] == number_to_classify) ? 1 : 0;
+        *y_transform = (y[i] == number_to_classify) ? 1 : 0;
         
         // Run grad descent
         run_gradient_descent(learning_rate, x_transform, y_transform, w);
@@ -130,6 +136,6 @@ void initalize_classifier(double *learning_rate, int number_to_classify, double 
     }
 }
 
-// int main(){
+int main(){
     
-// }
+}
