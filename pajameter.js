@@ -9,9 +9,13 @@ jdata {
     struct gradient_update_t {
         int dataTag;
         unsigned long long int logicalId;
-        int gradient[128];
+        double gradient[7850];
     } gradients as uflow;
+
+    double model[7850] as dflow;
 }
+
+let weights = [];
 
 const boundedDelayMax = 1;
 
@@ -85,7 +89,7 @@ jsync int[800] {fogOnly} getNextData(logicalId: int) {
             let vec = data.pop();
             vec[1].push(vec[0]);
             vec = vec[1];
-            console.log(vec);
+            // console.log(vec);
             vec.push(dataTag);
 
             dataInProgress.set(dataTag, vec);
@@ -97,8 +101,15 @@ jsync int[800] {fogOnly} getNextData(logicalId: int) {
     return [];
 }
 
-async function applyGradients(gradient_vec) {
+function initModel() {
+    for (var i = 0; i < 7580; i++) {
+        weights.push(Math.random() - 0.5);
+    }
+    model.write(weights);
+}
 
+async function applyGradients(gradient_vec) {
+    return;
 }
 
 async function aggregateUpdates() {
@@ -122,6 +133,10 @@ async function aggregateUpdates() {
 }
 
 if (jsys.type === "fog") {
+    initModel();
+    setInterval(() => {
+        model.write(weights);
+    }, 1000);
     await jsys.sleep(100);
     aggregateUpdates();
 }

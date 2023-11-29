@@ -10,11 +10,11 @@ function parseMNISTDataset(setSize, imagesPath, labelsPath, outputPath = "") {
 
         for (let x = 0; x < 28; x++) {
             for (let y = 0; y < 28; y++) {
-                pixels.push(dataFileBuffer[(image * 28 * 28) + (x + (y * 28)) + 16]);
+                pixels.push(parseInt(dataFileBuffer[(image * 28 * 28) + (x + (y * 28)) + 16]));
             }
         }
 
-        const label = labelFileBuffer[image + 8]
+        const label = parseInt(labelFileBuffer[image + 8]);
 
         // const binary_classifiers = [];
         // for (var i = 0; i < 10; i++)
