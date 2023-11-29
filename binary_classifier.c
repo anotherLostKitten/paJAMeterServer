@@ -109,7 +109,7 @@ void run_gradient_descent(double learning_rate, int number_to_classify, struct i
 }
 
 int main() {
-    struct image_data* data = read_data(MNIST_TRAINING_IMAGES, "data/train-images-idx3-ubyte", "data/train-labels-idx1-ubyte");
+    struct image_data* data = read_data(MNIST_TRAINING_IMAGES, "training_sets/train-images.idx3-ubyte", "training_sets/train-labels.idx1-ubyte");
 
     double w[FEATURE_SIZE_W_BIAS];
     for (int i=0; i < FEATURE_SIZE_W_BIAS; i++)
