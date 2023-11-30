@@ -71,7 +71,7 @@ jsync int[800] {deviceOnly} getNextDataLocal(logicalId: int) {
         try {
             var data = await dathandle.next(logicalId);
             dathandle.return();
-            console.log(data.value);
+            console.log("passing data value", data.value.at(-1));
             return data.value;
         } catch(e) {
             console.log(e.message, "... retrying");
@@ -94,7 +94,7 @@ jsync int[800] {fogOnly} getNextData(logicalId: int) {
             vec.push(dataTag);
 
             dataInProgress.set(dataTag, vec);
-            console.log("assigning data", dataTag, vec, "to", logicalId);
+            console.log("assigning data", dataTag, "to", logicalId);
             return vec;
         } else
             await jsys.sleep(1000);
@@ -127,7 +127,7 @@ async function aggregateUpdates() {
     while (data.length > 0 || dataInProgress.size > 0) {
         console.log("waiting to aggregate updates", data.length, dataInProgress.size);
         var gradient_updates = await gradients.readLast();
-        console.log(gradient_updates);
+        // console.log(gradient_updates);
         gradient_vec = [];
         if (!Array.isArray(gradient_updates)) {
             nodeDatas.get(gradient_updates.logicalId).delete(gradient_updates.dataTag);

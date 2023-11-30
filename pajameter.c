@@ -35,6 +35,7 @@ jasync pollUpdates() {
     while (hasData) {
         jsys.sleep(50000);
         model.read(&weights);
+        printf("updated model\n");
     }
 }
 
