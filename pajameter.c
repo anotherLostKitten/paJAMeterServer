@@ -1,3 +1,5 @@
+jarray double weights[7850];
+
 unsigned long long int logicalId = 0;
 int hasData = 1;
 
@@ -6,17 +8,23 @@ jasync calculateGradient(int data[], int label, int dataTag) {
 
     jsys.sleep(100000); // TODO
 
-    jarray int gradient[128] = {1, 2, 3};
+    double gradient[3] = {1, 2, 3};
 
     printf("writing to uflow %d\n", dataTag);
-    struct gradient_update_t gradient_wrapper = {.dataTag = dataTag, .logicalId = logicalId, .gradient = gradient};
-    gradients.write(&gradient_wrapper);
+    struct gradient_update_t* gradient_wrapper = malloc(sizeof(struct gradient_update_t));
+    gradient_wrapper->dataTag = dataTag;
+    gradient_wrapper->logicalId = logicalId;
+    nvoid_init(&gradient_wrapper->gradient, 7850, 'd', gradient, 3);
+    gradients.write(gradient_wrapper);
 }
 
 
 jasync dataFetch() {
     logicalId = getLogicalIdLocal();
     printf("got logical id %llu\n", logicalId);
+
+    model.read(&weights);
+    printf("got initial model\n");
 
     jarray int data[800];
     while (hasData) {
