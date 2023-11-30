@@ -23,7 +23,7 @@ const boundedDelayMax = 4;
 let logicalIdCount = 0;
 
 
-let data = parse_dataset.loadTrainingData();
+let data;
 
 let inProgress = [];
 
@@ -31,6 +31,7 @@ const nodeDatas = new Map();
 const dataInProgress = new Map();
 let dataCount = 0;
 
+const LEARNING_RATE = 0.005;
 
 jcond {
     fogOnly(me, you) {
@@ -111,16 +112,9 @@ function initModel() {
 
 
 async function applyGradients(gradient_vec) {
-    for (var g in gradient_vec) {
-        var gexp = new Array(g.length);
-        var sum = 0;
-
-        //softmax
+    for (var g in gradient_vec)
         for (var i = 0; i < g.length; i++)
-            sum += gexp[i] = Math.exp(g[i]);
-        for (var i = 0; i < g.length; i++)
-            weights[i] += gexp[i] / sum;
-    }
+            weights[i] -= g[i] * LEARNING_RATE;
 }
 
 async function aggregateUpdates() {
@@ -141,9 +135,32 @@ async function aggregateUpdates() {
             }
         applyGradients(gradient_vec);
     }
+
+    console.log("done; testing");
+    let test_set = parse_dataset.loadTestingData();
+
+
+    let success = 0;
+    for (var img in test_set) {
+        var maxc = 0, maxn = -1;
+        for (var n = 0; n < 10; n++) {
+            var conf = weights[785 * n + 784];
+            for (var i = 0; i < 784; i++)
+                conf += weights[785 * n + i] * img[1][i] / 256.0;
+
+            if (conf > maxc) {
+                maxc = conf;
+                maxn = n;
+            }
+        }
+        if (maxn == img[0])
+            success++;
+    }
+    console.log("accuracy: " + success + " / " + test_set.length + " (" + (success / test_set.length * 100.0) + "%)");
 }
 
 if (jsys.type === "fog") {
+    data = parse_dataset.loadTrainingData();
     initModel();
     setInterval(() => {
         model.write(weights);

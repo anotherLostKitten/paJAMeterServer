@@ -96,25 +96,52 @@ void run_gradient_descent(double learning_rate, int number_to_classify, struct i
     gradient(gradient_output, x, w, y);
 
     // Perform gradient descent -- aka update the weights based on the gradient
-    for (int i = 0; i < FEATURE_SIZE_W_BIAS; i++){
-        w[i]= w[i] - learning_rate * gradient_output[i];
-    }
 
-    // Step 3: Calculate the l2 norm in order to get the model error
-    double error = calculate_L2_norm(gradient_output, FEATURE_SIZE_W_BIAS);
+    for (int i = 0; i < FEATURE_SIZE_W_BIAS; i++)
+        w[i] -= learning_rate * gradient_output[i];
 
-    // Step 4: Print out the error
-    printf("The model error is: %lf\n", error);
+    // // Step 3: Calculate the l2 norm in order to get the model error
+    // double error = calculate_L2_norm(gradient_output, FEATURE_SIZE_W_BIAS);
+
+    // // Step 4: Print out the error
+    // printf("The model error is: %lf\n", error);
 
 }
 
 int main() {
     struct image_data* data = read_data(MNIST_TRAINING_IMAGES, "training_sets/train-images.idx3-ubyte", "training_sets/train-labels.idx1-ubyte");
 
-    double w[FEATURE_SIZE_W_BIAS];
-    for (int i=0; i < FEATURE_SIZE_W_BIAS; i++)
+    double w[FEATURE_SIZE_W_BIAS * 10];
+    for (int i=0; i < FEATURE_SIZE_W_BIAS * 10; i++)
         w[i] = generate_random_weight();
 
     for (int i=0; i < MNIST_TRAINING_IMAGES; i++)
-        run_gradient_descent(LEARNING_RATE, NUMBER_TO_CLASSIFY, &data[i], w);
+        for (int n = 0; n < 10; n++)
+            run_gradient_descent(LEARNING_RATE, n, &data[i], &w[785 * n]);
+
+    free(data);
+
+    data = read_data(MNIST_TESTING_IMAGES, "training_sets/t10k-images.idx3-ubyte", "training_sets/t10k-labels.idx1-ubyte");
+
+    int success = 0;
+
+    for (int img = 0; img < MNIST_TESTING_IMAGES; img++) {
+        double maxc = 0;
+        int maxn = -1;
+        for (int n = 0; n < 10; n++) {
+            double conf = w[785 * n + 784];
+            for (int i = 0; i < 784; i++)
+                conf += w[785 * n + i] * (double)data[img].data[i] / 255.0;
+            if (conf > maxc) {
+                maxc = conf;
+                maxn = n;
+            }
+        }
+        if (maxn == data[img].label)
+            success++;
+    }
+
+    free(data);
+
+    printf("accuracy: %d / %d (%lf%%)\n", success, MNIST_TESTING_IMAGES, (double)success / (double)MNIST_TESTING_IMAGES * 100.0);
 }
