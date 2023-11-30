@@ -1,4 +1,5 @@
 japp nspc {
+    required_clibs: math.h, float.h;
     required_linker_flags: -lm;
 }
 
@@ -15,9 +16,9 @@ jdata {
     double model[7850] as dflow;
 }
 
-let weights = [];
+let weights = new Array(7850);
 
-const boundedDelayMax = 1;
+const boundedDelayMax = 4;
 
 let logicalIdCount = 0;
 
@@ -102,14 +103,24 @@ jsync int[800] {fogOnly} getNextData(logicalId: int) {
 }
 
 function initModel() {
-    for (var i = 0; i < 7580; i++) {
-        weights.push(Math.random() - 0.5);
-    }
+    for (var i = 0; i < 7580; i++)
+        weights[i] = (Math.random() - 0.5);
     model.write(weights);
 }
 
+
+
 async function applyGradients(gradient_vec) {
-    return;
+    for (var g in gradient_vec) {
+        var gexp = new Array(g.length);
+        var sum = 0;
+
+        //softmax
+        for (var i = 0; i < g.length; i++)
+            sum += gexp[i] = Math.exp(g[i]);
+        for (var i = 0; i < g.length; i++)
+            weights[i] += gexp[i] / sum;
+    }
 }
 
 async function aggregateUpdates() {
