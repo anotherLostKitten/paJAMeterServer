@@ -82,7 +82,7 @@ jsync unsigned long long int {fogOnly} getLogicalId(cid: char*) {
         }
 
         nodeDatas.get(lid).clear();
-    }, 1000));
+    }, 5000));
 
     return lid;
 }
@@ -111,12 +111,14 @@ jsync int[800] {fogOnly} getNextData(logicalId: int) {
         console.log("logical id", logicalId, "not recognized, stopping device");
         return [];
     }
+
+    heartbeats.get(logicalId).refresh();
+
     if (data.length > 0) {
         if (nodeDatas.get(logicalId).size < boundedDelayMax) {
             let dataTag = ++dataCount;
 
             nodeDatas.get(logicalId).add(dataTag);
-            heartbeats.get(logicalId).refresh();
 
             let vec = data.pop();
             vec[1].push(vec[0]);
@@ -207,7 +209,7 @@ if (jsys.type === "fog") {
     data = parse_dataset.loadTrainingData();
     initModel();
     setInterval(() => {
-        console.log("updating model");
+        // console.log("updating model");
         model.write(weights);
     }, 300);
     await jsys.sleep(100);

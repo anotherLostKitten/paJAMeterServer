@@ -74,6 +74,7 @@ void init_weights(double* w){
         w[i] = generate_random_weight();
 }
 
+double gradient_output[FEATURE_SIZE_W_BIAS * 10];
 
 // Run Gradient Descent
 void run_gradient_descent(double learning_rate, struct image_data* datum, double* w){
@@ -83,7 +84,6 @@ void run_gradient_descent(double learning_rate, struct image_data* datum, double
     add_bias_column(datum->data, x);
 
     // Calculate the gradient
-    double* gradient_output = malloc(FEATURE_SIZE_W_BIAS * 10 * sizeof(double));
     gradient(gradient_output, x, w, datum->label);
 
     // Perform gradient descent -- aka update the weights based on the gradient
@@ -91,13 +91,11 @@ void run_gradient_descent(double learning_rate, struct image_data* datum, double
     for (int i = 0; i < FEATURE_SIZE_W_BIAS * 10; i++)
         w[i] -= learning_rate * gradient_output[i];
 
-    // Step 3: Calculate the l2 norm in order to get the model error
-    double error = calculate_L2_norm(gradient_output, FEATURE_SIZE_W_BIAS * 10);
+    // // Step 3: Calculate the l2 norm in order to get the model error
+    // double error = calculate_L2_norm(gradient_output, FEATURE_SIZE_W_BIAS * 10);
 
-    // Step 4: Print out the error
-    printf("The model error is: %lf\n", error);
-
-    free(gradient_output);
+    // // Step 4: Print out the error
+    // printf("The model error is: %lf\n", error);
 }
 
 int main() {
