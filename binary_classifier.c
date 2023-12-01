@@ -6,7 +6,7 @@
 
 #include "mnist_constants.h"
 
-double calculate_L2_norm(double *vector, int size) {
+double calculate_L2_norm(double* vector, int size) {
 
     // Init the double sum
     double sum_of_squares = 0.0;
@@ -27,7 +27,7 @@ double generate_random_weight() {
 
 
 // Dot product function for vectors
-double dot_product(double *a, double *b, int size) {
+double dot_product(double* a, double* b, int size) {
     double result = 0.;
 
     for (int i = 0; i < size; i++) {
@@ -37,7 +37,7 @@ double dot_product(double *a, double *b, int size) {
     return result;
 }
 
-void gradient(double *gradient_output, double *x, double *w, int label) {
+void gradient(double* gradient_output, double* x, double* w, int label) {
     // Note n is FEATURE_SIZE_W_BIAS since that is the feature size of our image
     // y is 1x1 value -- either true or false
     // x is (D+1)x1 array -- the pixels of the image as an array - D is number of features - +1 because of bias
@@ -91,11 +91,11 @@ void run_gradient_descent(double learning_rate, struct image_data* datum, double
     for (int i = 0; i < FEATURE_SIZE_W_BIAS * 10; i++)
         w[i] -= learning_rate * gradient_output[i];
 
-    // // Step 3: Calculate the l2 norm in order to get the model error
-    // double error = calculate_L2_norm(gradient_output, FEATURE_SIZE_W_BIAS);
+    // Step 3: Calculate the l2 norm in order to get the model error
+    double error = calculate_L2_norm(gradient_output, FEATURE_SIZE_W_BIAS * 10);
 
-    // // Step 4: Print out the error
-    // printf("The model error is: %lf\n", error);
+    // Step 4: Print out the error
+    printf("The model error is: %lf\n", error);
 
     free(gradient_output);
 }
