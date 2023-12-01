@@ -12,17 +12,24 @@ jasync calculateGradient(int data[], int label, int dataTag) {
     gradient_wrapper->logicalId = logicalId;
     nvoid_init((nvoid_t*)&gradient_wrapper->gradient, 7850, 'd', NULL, 0);
 
+    double yhat[10], sum = 0;
+
     for (int n = 0; n < 10; n++) {
         double dp = weights.data[n * 785 + 784];
-        for (int i = 0; i < 784; i++)
+        for (int i = 0; i < 784; i++) {
+            jsys.dontyield();
             dp +=  (double)data->data[i] / 256.0 * weights.data[n * 785 + i];
-
+        }
+        sum += yhat[n] = exp(dp);
         jsys.yield();
-        double yhat = 1.0 / (1.0 + exp(-dp));
-        double ydif = n == label ? yhat - 1.0 : yhat;
+    }
+    for (int n = 0; n < 10; n++) {
+        double ydif = yhat[n] / sum - (n == label ? 1.0 : 0.0);
 
-        for (int i = 0; i < 784; i++)
+        for (int i = 0; i < 784; i++) {
+            jsys.dontyield();
             gradient_wrapper->gradient.data[n * 785 + i] = (double)data->data[i] / 256.0 * ydif;
+        }
         gradient_wrapper->gradient.data[n * 785 + 784] = ydif;
         jsys.yield();
     }
