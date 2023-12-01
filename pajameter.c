@@ -1,7 +1,11 @@
+#define BOUNDED_DELAY 4
+
+jarray int owned_datas[BOUNDED_DELAY];
+
 jarray double weights[7850];
 
 unsigned long long int logicalId = 0;
-int hasData = 1, numData = 0, noDatas = 10;
+int hasData = 1;
 
 jasync calculateGradient(int data[], int label, int dataTag) {
     printf("computing gradient for data %d (label: %d)\n", dataTag, label);
@@ -34,7 +38,13 @@ jasync calculateGradient(int data[], int label, int dataTag) {
         jsys.yield();
     }
     gradient_wrapper->gradient.len = 7850;
-    numData--;
+
+    for (int i = 0; i < BOUNDED_DELAY; i++) {
+        jsys.dontyield();
+        if (owned_datas.data[i] == dataTag)
+            owned_datas.data[i] = 0;
+    }
+
     gradients.write(gradient_wrapper);
 }
 
@@ -45,7 +55,6 @@ jasync pollUpdates() {
         printf("updated model\n");
     }
 }
-
 
 jasync dataFetch() {
     logicalId = getLogicalIdLocal();
@@ -58,15 +67,22 @@ jasync dataFetch() {
     jarray int data[800];
     while (hasData) {
         data = getNextDataLocal(logicalId);
-        if (data.len) {
-            noDatas = 10;
-            numData++;
+        if (data.len > 1) {
             int dataTag = data.data[--data.len];
             int label = data.data[--data.len];
+
+            for (int i = 0, e = 0; i < BOUNDED_DELAY; i++) {
+                jsys.dontyield();
+                if (owned_datas.data[i] == dataTag)
+                    goto skip;
+                else if (owned_datas.data[i] == 0 && !e++)
+                    owned_datas.data[i] = dataTag;
+            }
+
             calculateGradient(&data, label, dataTag);
-        } else if (!--noDatas)
+        } else if (data.len == 1)
             hasData = 0;
-        jsys.sleep(100);
+    skip:jsys.sleep(100);
     }
 }
 

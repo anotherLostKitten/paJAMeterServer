@@ -22,7 +22,6 @@ const boundedDelayMax = 4;
 
 let logicalIdCount = 0;
 
-
 let data;
 
 let inProgress = [];
@@ -84,7 +83,7 @@ jsync int[800] {deviceOnly} getNextDataLocal(logicalId: int) {
 jsync int[800] {fogOnly} getNextData(logicalId: int) {
     if (data.length > 0) {
         if (nodeDatas.get(logicalId).size < boundedDelayMax) {
-            let dataTag = dataCount++;
+            let dataTag = ++dataCount;
 
             nodeDatas.get(logicalId).add(dataTag);
 
@@ -98,9 +97,14 @@ jsync int[800] {fogOnly} getNextData(logicalId: int) {
             console.log("assigning data", dataTag, "to", logicalId);
             return vec;
         } else
-            await jsys.sleep(1000);
+            for (var e of nodeDatas.get(logicalId))
+                return dataInProgress.get(e);
     }
-    return [];
+    if (nodeDatas.get(logicalId).size > 0)
+        for (var e of nodeDatas.get(logicalId))
+            return dataInProgress.get(e);
+
+    return [0];
 }
 
 function initModel() {
@@ -112,7 +116,7 @@ function initModel() {
 
 
 async function applyGradients(gradient_vec) {
-    for (var g in gradient_vec)
+    for (var g of gradient_vec)
         for (var i = 0; i < g.length; i++)
             weights[i] -= g[i] * LEARNING_RATE;
 }
@@ -127,12 +131,13 @@ async function aggregateUpdates() {
             nodeDatas.get(gradient_updates.logicalId).delete(gradient_updates.dataTag);
             dataInProgress.delete(gradient_updates.dataTag);
             gradient_vec.push(gradient_updates.gradient);
-        } else
-            for (var gradient in gradient_updates) {
+        } else {
+            for (var gradient of gradient_updates) {
                 nodeDatas.get(gradient.logicalId).delete(gradient.dataTag);
                 dataInProgress.delete(gradient.dataTag);
                 gradient_vec.push(gradient.gradient);
             }
+        }
         applyGradients(gradient_vec);
     }
 
@@ -141,7 +146,7 @@ async function aggregateUpdates() {
 
 
     let success = 0;
-    for (var img in test_set) {
+    for (var img of test_set) {
         var maxc = 0, maxn = -1;
         for (var n = 0; n < 10; n++) {
             var conf = weights[785 * n + 784];
