@@ -26,11 +26,6 @@ double generate_random_weight() {
 }
 
 
-// Logistic Function
-double logistic(double z) {
-    return 1. / (1. + exp(-z));
-}
-
 // Dot product function for vectors
 double dot_product(double *a, double *b, int size) {
     double result = 0.;
@@ -42,7 +37,7 @@ double dot_product(double *a, double *b, int size) {
     return result;
 }
 
-void gradient(double *gradient_output, double *x, double *w, double y){
+void gradient(double *gradient_output, double *x, double *w, int label) {
     // Note n is FEATURE_SIZE_W_BIAS since that is the feature size of our image
     // y is 1x1 value -- either true or false
     // x is (D+1)x1 array -- the pixels of the image as an array - D is number of features - +1 because of bias
@@ -51,17 +46,16 @@ void gradient(double *gradient_output, double *x, double *w, double y){
     // Since our convention has w as Dx1 we can just use dot product
     // The bias is a 1x1 value
 
-    // Calculate y_hat - This is 1x1 value
-    double y_hat = logistic(dot_product(x, w, FEATURE_SIZE_W_BIAS));
-
-    // Calculate difference between y_hat and y
-    double y_diff = y_hat - y;
+    double y_hat[10], sum = 0;
+    for (int n = 0; n < 10; n++)
+        sum += y_hat[n] = exp(dot_product(x, &w[n * FEATURE_SIZE_W_BIAS], FEATURE_SIZE_W_BIAS));
+    for (int n = 0; n < 10; n++)
+        y_hat[n] = y_hat[n] / sum - (label == n ? 1. : 0.);
 
     // Calculate the gradient vector -- this is a (D+1)x1 sized vector
-    for (int i = 0; i < FEATURE_SIZE_W_BIAS; i++){
-        gradient_output[i] = x[i] * y_diff;
-    }
-
+    for (int i = 0; i < FEATURE_SIZE_W_BIAS; i++)
+        for (int n = 0; n < 10; n++)
+            gradient_output[i + FEATURE_SIZE_W_BIAS * n] = x[i] * y_hat[n];
 }
 
 // Function used to add a new column to the features matrix - a bias column
@@ -76,28 +70,25 @@ void add_bias_column(uint8_t* x, double* x_with_bias) {
 
 // Initialize weights needed for gradient descent - add an extra row for bias
 void init_weights(double* w){
-    for (int i = 0; i < FEATURE_SIZE_W_BIAS; i++){
+    for (int i = 0; i < FEATURE_SIZE_W_BIAS; i++)
         w[i] = generate_random_weight();
-    }
 }
 
 
 // Run Gradient Descent
-void run_gradient_descent(double learning_rate, int number_to_classify, struct image_data* datum, double* w){
+void run_gradient_descent(double learning_rate, struct image_data* datum, double* w){
 
     // Step 1: Add a bias column to the feature vector - ONLY USE x_with_bias from here
     double x[FEATURE_SIZE_W_BIAS];
     add_bias_column(datum->data, x);
 
-    double y = datum->label == number_to_classify ? 1 : 0;
-
     // Calculate the gradient
-    double gradient_output[FEATURE_SIZE_W_BIAS];
-    gradient(gradient_output, x, w, y);
+    double* gradient_output = malloc(FEATURE_SIZE_W_BIAS * 10 * sizeof(double));
+    gradient(gradient_output, x, w, datum->label);
 
     // Perform gradient descent -- aka update the weights based on the gradient
 
-    for (int i = 0; i < FEATURE_SIZE_W_BIAS; i++)
+    for (int i = 0; i < FEATURE_SIZE_W_BIAS * 10; i++)
         w[i] -= learning_rate * gradient_output[i];
 
     // // Step 3: Calculate the l2 norm in order to get the model error
@@ -106,6 +97,7 @@ void run_gradient_descent(double learning_rate, int number_to_classify, struct i
     // // Step 4: Print out the error
     // printf("The model error is: %lf\n", error);
 
+    free(gradient_output);
 }
 
 int main() {
@@ -116,8 +108,7 @@ int main() {
         w[i] = generate_random_weight();
 
     for (int i=0; i < MNIST_TRAINING_IMAGES; i++)
-        for (int n = 0; n < 10; n++)
-            run_gradient_descent(LEARNING_RATE, n, &data[i], &w[785 * n]);
+        run_gradient_descent(LEARNING_RATE, &data[i], w);
 
     free(data);
 
