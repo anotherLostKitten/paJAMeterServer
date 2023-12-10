@@ -12,6 +12,6 @@ To run, use the `jamrun` command.
 
 `jamrun pajameter.jxe --app=ps --fog` will start the parameter server; this should be done once.
 
-`jamrun pajaameter.jxe --app=ps` will start a worker; this can be done as many times as desired.
+`jamrun pajameter.jxe --app=ps` will start a worker; this can be done as many times as desired.
 
 The sequential reference implementation can be compiled through the makefile.
