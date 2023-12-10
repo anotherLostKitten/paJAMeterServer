@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
+#include <time.h>
 
 #include "mnist_constants.h"
 
@@ -74,7 +75,7 @@ void init_weights(double* w){
         w[i] = generate_random_weight();
 }
 
-#define BATCH_SIZE 16
+#define BATCH_SIZE 1
 
 double gradient_output[FEATURE_SIZE_W_BIAS * 10 * BATCH_SIZE];
 
@@ -109,18 +110,26 @@ int main() {
     for (int i=0; i < FEATURE_SIZE_W_BIAS * 10; i++)
         w[i] = generate_random_weight();
 
+    clock_t start = clock();
+
     int batch = 0;
     for (int i = 0; i < MNIST_TRAINING_IMAGES; i++) {
         run_gradient_descent(LEARNING_RATE, &data[i], w, batch);
-        batch = (batch + 1) % BATCH_SIZE;
+        if (BATCH_SIZE > 1)
+            batch = (batch + 1) % BATCH_SIZE;
     }
 
-    if (batch)
-        for (int b = 0; b < batch - 1; b++)
-            for (int i = 0; i < FEATURE_SIZE_W_BIAS * 10; i++)
-                w[i] -= LEARNING_RATE * gradient_output[FEATURE_SIZE_W_BIAS * 10 * b + i];
+    if (BATCH_SIZE > 1)
+        if (batch)
+            for (int b = 0; b < batch - 1; b++)
+                for (int i = 0; i < FEATURE_SIZE_W_BIAS * 10; i++)
+                    w[i] -= LEARNING_RATE * gradient_output[FEATURE_SIZE_W_BIAS * 10 * b + i];
 
+    clock_t end = clock();
 
+    double elapsed = (end - start) / (double)CLOCKS_PER_SEC;
+
+    printf("elapsed: %lf\n", elapsed);
 
     free(data);
 
