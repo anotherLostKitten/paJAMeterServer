@@ -1,7 +1,9 @@
-#define BOUNDED_DELAY 4
+#define BOUNDED_DELAY 10
 
 jarray int owned_datas[BOUNDED_DELAY] = {0};
-jarray int recentq[8] = {0};
+jarray int recentq[BOUNDED_DELAY] = {0};
+struct gradient_update_t* recent_grads[BOUNDED_DELAY];
+
 int recentqcirc = 0;
 
 
@@ -53,17 +55,20 @@ jasync calculateGradient(int data[], int label, int dataTag) {
         if (owned_datas.data[i] == dataTag)
             owned_datas.data[i] = 0;
     }
-    if (recentq.len < 2 * BOUNDED_DELAY) {
-        recentq.data[recentq.len++] = dataTag;
+    if (recentq.len < BOUNDED_DELAY) {
+        recentq.data[recentq.len] = dataTag;
+        recent_grads[recentq.len] = gradient_wrapper;
+        recentq.len++;
     } else {
-        recentq.data[recentqcirc++] = dataTag;
-        recentqcirc %= 2 * BOUNDED_DELAY;
+        recentq.data[recentqcirc] = dataTag;
+        free(recent_grads[recentqcirc]);
+        recent_grads[recentqcirc] = gradient_wrapper;
+        recentqcirc = (recentqcirc + 1) % BOUNDED_DELAY;
     }
 
     printf("computed gradient for data %d (label: %d), error %lf\n", dataTag, label, sqrt(l2_norm_sum));
 
     gradients.write(gradient_wrapper);
-    free(gradient_wrapper);
 }
 
 jasync pollUpdates() {
@@ -89,9 +94,12 @@ jasync dataFetch() {
             int dataTag = data.data[--data.len];
             int label = data.data[--data.len];
 
-            for (int i = 0, e = 0; i < BOUNDED_DELAY; i++) {
+            for (int i = 0; i < BOUNDED_DELAY; i++) {
                 jsys.dontyield();
-                if (owned_datas.data[i] == dataTag || recentq.data[i] == dataTag || recentq.data[i + BOUNDED_DELAY] == dataTag)
+                if (recentq.data[i] == dataTag) {
+                    gradients.write(recent_grads[i]);
+                    goto skip;
+                } if (owned_datas.data[i] == dataTag)
                     goto skip;
             }
             for (int i = 0; i < BOUNDED_DELAY; i++) {

@@ -39,12 +39,12 @@ double dot_product(double* a, double* b, int size) {
 
 void gradient(double* gradient_output, double* x, double* w, int label) {
     // Note n is FEATURE_SIZE_W_BIAS since that is the feature size of our image
-    // y is 1x1 value -- either true or false
+    // label is the expected numerical result; we do a softmax on the model outputs
     // x is (D+1)x1 array -- the pixels of the image as an array - D is number of features - +1 because of bias
-    // w is (D+1)x1 array -- we automatically assume the transpose
+    // w is (D+1)x10 array -- we automatically assume the transpose
     // y_hat is by definition wT*x = y_hat
-    // Since our convention has w as Dx1 we can just use dot product
-    // The bias is a 1x1 value
+    // Since our convention has w as (D+1)x10 we can just use dot product;
+    // The bias is a 1x10 value
 
     double y_hat[10], sum = 0;
     for (int n = 0; n < 10; n++)
@@ -74,22 +74,26 @@ void init_weights(double* w){
         w[i] = generate_random_weight();
 }
 
-double gradient_output[FEATURE_SIZE_W_BIAS * 10];
+#define BATCH_SIZE 16
+
+double gradient_output[FEATURE_SIZE_W_BIAS * 10 * BATCH_SIZE];
 
 // Run Gradient Descent
-void run_gradient_descent(double learning_rate, struct image_data* datum, double* w){
+void run_gradient_descent(double learning_rate, struct image_data* datum, double* w, int batch){
 
     // Step 1: Add a bias column to the feature vector - ONLY USE x_with_bias from here
     double x[FEATURE_SIZE_W_BIAS];
     add_bias_column(datum->data, x);
 
     // Calculate the gradient
-    gradient(gradient_output, x, w, datum->label);
+    gradient(&gradient_output[FEATURE_SIZE_W_BIAS * 10 * batch], x, w, datum->label);
 
     // Perform gradient descent -- aka update the weights based on the gradient
 
-    for (int i = 0; i < FEATURE_SIZE_W_BIAS * 10; i++)
-        w[i] -= learning_rate * gradient_output[i];
+    if (batch == BATCH_SIZE - 1)
+        for (int b = 0; b < BATCH_SIZE; b++)
+            for (int i = 0; i < FEATURE_SIZE_W_BIAS * 10; i++)
+                w[i] -= learning_rate * gradient_output[FEATURE_SIZE_W_BIAS * 10 * b + i];
 
     // // Step 3: Calculate the l2 norm in order to get the model error
     // double error = calculate_L2_norm(gradient_output, FEATURE_SIZE_W_BIAS * 10);
@@ -105,8 +109,18 @@ int main() {
     for (int i=0; i < FEATURE_SIZE_W_BIAS * 10; i++)
         w[i] = generate_random_weight();
 
-    for (int i=0; i < MNIST_TRAINING_IMAGES; i++)
-        run_gradient_descent(LEARNING_RATE, &data[i], w);
+    int batch = 0;
+    for (int i = 0; i < MNIST_TRAINING_IMAGES; i++) {
+        run_gradient_descent(LEARNING_RATE, &data[i], w, batch);
+        batch = (batch + 1) % BATCH_SIZE;
+    }
+
+    if (batch)
+        for (int b = 0; b < batch - 1; b++)
+            for (int i = 0; i < FEATURE_SIZE_W_BIAS * 10; i++)
+                w[i] -= LEARNING_RATE * gradient_output[FEATURE_SIZE_W_BIAS * 10 * b + i];
+
+
 
     free(data);
 

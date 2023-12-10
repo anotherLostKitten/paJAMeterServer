@@ -18,7 +18,7 @@ jdata {
 
 let weights = new Array(7850);
 
-const boundedDelayMax = 4;
+const boundedDelayMax = 10;
 
 let logicalIdCount = 0;
 
@@ -30,6 +30,8 @@ const nodeDatas = new Map();
 const dataInProgress = new Map();
 const heartbeats = new Map();
 let dataCount = 0;
+
+let startedTimer = null;
 
 const LEARNING_RATE = 0.005;
 
@@ -114,6 +116,9 @@ jsync int[800] {fogOnly} getNextData(logicalId: int) {
 
     heartbeats.get(logicalId).refresh();
 
+    if (startedTimer === null)
+        startedTimer = process.hrtime();
+
     if (data.length > 0) {
         if (nodeDatas.get(logicalId).size < boundedDelayMax) {
             let dataTag = ++dataCount;
@@ -181,8 +186,8 @@ async function aggregateUpdates() {
         }
         applyGradients(gradient_vec);
     }
-
-    console.log("done; testing");
+    let time = process.hrtime(startedTimer)
+    console.log("done in", time[0] + time[1]/1e9, "; testing");
     let test_set = parse_dataset.loadTestingData();
 
     let success = 0;
@@ -212,6 +217,9 @@ if (jsys.type === "fog") {
         // console.log("updating model");
         model.write(weights);
     }, 300);
+    setInterval(() => {
+        console.log("data left:", data.length, "   in progress:", dataInProgress.size);
+    }, 1000);
     await jsys.sleep(100);
     aggregateUpdates();
 }
