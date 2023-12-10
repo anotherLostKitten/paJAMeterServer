@@ -213,13 +213,15 @@ async function aggregateUpdates() {
 if (jsys.type === "fog") {
     data = parse_dataset.loadTrainingData();
     initModel();
-    setInterval(() => {
+    let pubInt = setInterval(() => {
         // console.log("updating model");
         model.write(weights);
     }, 300);
-    setInterval(() => {
+    let logInt = setInterval(() => {
         console.log("data left:", data.length, "   in progress:", dataInProgress.size);
     }, 1000);
     await jsys.sleep(100);
-    aggregateUpdates();
+    await aggregateUpdates();
+    clearInterval(pubInt);
+    clearInterval(logInt);
 }
